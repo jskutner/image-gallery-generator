@@ -3,135 +3,477 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Widescreen Image Converter</title>
     <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous">
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js" defer crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/jszip@3.7.1/dist/jszip.min.js" defer crossorigin="anonymous"></script>
+    <title>Shopify Image Converter</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        .dropzone {
-            border: 2px dashed #ccc;
-            border-radius: 4px;
-            padding: 20px;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4ff 50%, #faf5ff 100%);
+            min-height: 100vh;
+            padding: 3rem 1rem;
+        }
+        
+        .container {
+            max-width: 896px;
+            margin: 0 auto;
+        }
+        
+        .header {
             text-align: center;
-            background: #f8f8f8;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #4f46e5, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+        }
+        
+        .header p {
+            color: #4b5563;
+            font-size: 1.125rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.3s ease;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-icon.shopify {
+            background-color: #e0e7ff;
+        }
+        
+        .card-icon.upload {
+            background-color: #f3e8ff;
+        }
+        
+        .card-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .card-icon.shopify svg {
+            color: #4f46e5;
+        }
+        
+        .card-icon.upload svg {
+            color: #9333ea;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 0.75rem 1.25rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
             transition: all 0.3s ease;
+            letter-spacing: 0.025em;
         }
-        .dropzone.dragover {
-            background: #e1e1e1;
-            border-color: #999;
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
         }
-        .preview-container {
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+        }
+        
+        .dropzone {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.75rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(249, 250, 251, 0.5);
+        }
+        
+        .dropzone:hover {
+            background-color: rgba(243, 244, 246, 0.5);
+        }
+        
+        .dragover {
+            border-color: #6366f1 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            background-size: 200% 200% !important;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .dropzone-icon {
+            font-size: 48px;
+            opacity: 0.5;
+            margin-bottom: 0.75rem;
+        }
+        
+        .dropzone p {
+            color: #374151;
+            font-weight: 500;
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .dropzone p:last-child {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+        
+        .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
-        .preview-item {
-            position: relative;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
-            background: #f0f0f0;
+        
+        .form-group {
+            margin-top: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input[type="number"],
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .color-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .color-group input[type="color"] {
+            width: 4rem;
+            height: 4rem;
+            padding: 0.25rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .color-group input[type="text"] {
+            flex: 1;
+            font-family: monospace;
+        }
+        
+        .btn-full {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.125rem;
+            margin-top: 2rem;
+        }
+        
+        .progress-container {
+            margin-top: 2rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .progress-header span:first-child {
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .progress-header span:last-child {
+            font-weight: 600;
+        }
+        
+        progress {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
             border-radius: 4px;
             overflow: hidden;
         }
+        
+        progress::-webkit-progress-bar {
+            background-color: #e5e7eb;
+            border-radius: 4px;
+        }
+        
+        progress::-webkit-progress-value {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        progress::-moz-progress-bar {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 4px;
+        }
+        
+        .status-message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .status-message.error {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-message.success {
+            background-color: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .preview-item {
+            position: relative;
+            width: 220px;
+            height: 165px;
+            margin: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+            border-color: #6366f1;
+        }
+        
         .preview-item img {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
-        progress {
-            width: 100%;
-            height: 20px;
-            margin-top: 10px;
+        
+        .download-container {
+            margin-top: 2rem;
+            text-align: center;
         }
-        #status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
+        
+        .hidden {
+            display: none !important;
         }
-        .error {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .success {
-            background-color: #dcfce7;
-            color: #16a34a;
-        }
-        .color-input-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .color-input-group input[type="color"] {
-            width: 50px;
-            height: 38px;
-            padding: 0;
-        }
-        .color-input-group input[type="text"] {
-            width: 100px;
+        
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-3xl font-bold mb-6 text-center">Online Widescreen Image Converter</h1>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Shopify Image Converter</h1>
+            <p>Convert Shopify product images to 16:9 format</p>
+        </div>
         
-        <div id="status" class="hidden"></div>
-        
-        <div class="space-y-6">
-            <div class="dropzone" id="dropzone">
-                <p class="text-gray-600">Drag and drop images here or click to select files</p>
-                <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Output Width</label>
-                    <input type="number" id="width" value="1920" min="640" max="3840" 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+        <!-- Shopify URL Input -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon shopify">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                    </svg>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Output Height</label>
-                    <input type="number" id="height" value="1080" min="360" max="2160"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                </div>
+                <h2 class="card-title">Shopify Product Images</h2>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Background Color</label>
-                <div class="color-input-group mt-1">
-                    <input type="color" id="bgColor" value="#F7F7F7">
-                    <input type="text" id="bgColorHex" value="#F7F7F7" 
-                           class="rounded-md border-gray-300 shadow-sm"
-                           pattern="^#[0-9A-Fa-f]{6}$"
-                           placeholder="#F7F7F7">
+            <div class="input-group">
+                <input type="url" id="shopifyUrl" placeholder="https://your-store.myshopify.com/products/product-name">
+                <button id="processShopifyBtn" class="btn btn-primary">Fetch Product</button>
+            </div>
+            
+            <!-- Variant Selection -->
+            <div id="variantSelector" class="hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">Select Variant Images</label>
+                <select id="variantSelect" style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; margin-bottom: 1rem; background: white;">
+                    <option value="all">All Variants (All Images)</option>
+                </select>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button id="processSelectedBtn" class="btn btn-primary" style="flex: 1;">Process Selected Variant</button>
+                    <button id="cancelVariantBtn" class="btn" style="flex: 0; padding: 0.75rem 1.5rem; background: #e5e7eb; color: #374151;">Cancel</button>
                 </div>
             </div>
 
-            <button id="convertBtn" disabled
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                Loading FFmpeg...
-            </button>
+            <div class="form-grid" style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label>Width (px)</label>
+                    <input type="number" id="width" value="1920">
+                </div>
+                <div class="form-group">
+                    <label>Height (px)</label>
+                    <input type="number" id="height" value="1080">
+                </div>
+            </div>
 
-            <div id="progress" class="hidden">
-                <div class="text-sm font-medium text-gray-700">Processing...</div>
+            <div class="form-group">
+                <label>Background Color</label>
+                <div class="color-group">
+                    <input type="color" id="bgColor" value="#FFFFFF">
+                    <input type="text" id="bgColorHex" value="#FFFFFF" placeholder="#FFFFFF">
+                </div>
+            </div>
+
+            <div id="progress" class="progress-container hidden">
+                <div class="progress-header">
+                    <span>Processing images...</span>
+                    <span id="status"></span>
+                </div>
                 <progress value="0" max="100"></progress>
             </div>
 
-            <div id="downloadAllContainer" class="hidden">
-                <button id="downloadAllBtn"
-                        class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mb-4">
+            <div id="statusDiv" class="hidden"></div>
+
+            <div id="previewContainer" class="preview-container"></div>
+
+            <div id="downloadAllContainer" class="download-container hidden">
+                <button id="downloadAllBtn" class="btn btn-success">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
                     Download All Images (ZIP)
                 </button>
             </div>
-
-            <div id="previewContainer" class="preview-container"></div>
         </div>
     </div>
     <script src="app.js"></script>
 </body>
+</html>
+</html> 
 </html> 

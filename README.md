@@ -54,4 +54,4 @@ The `vercel.json` and `netlify.toml` files contain the necessary headers configu
 
 ## License
 
-MIT License 
+MIT License  
